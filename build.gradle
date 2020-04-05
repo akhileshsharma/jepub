@@ -16,9 +16,103 @@
 
 plugins {
   id 'java-library'
+  id 'signing'
+  id 'maven-publish'
+}
+
+sourceCompatibility = 11
+targetCompatibility = 11
+tasks.withType(JavaCompile) {
+  options.encoding = 'UTF-8'
+}
+
+group 'com.swardana.jepub'
+version '1.0-SNAPSHOT'
+description = 'Jepub is a Java library for processing EPUB file'
+
+def pomConfig = {
+  packaging 'jar'
+  name 'Jepub'
+  // Description won't be used when creating the pom file automatically.
+  // So I've added it manually in the pom.withXml{} section in the publishing task
+  url 'https://github.com/swardana/jepub'
+  inceptionYear '2020'
+  licenses {
+    license {
+      name 'The Apache Software License, Version 2.0'
+      url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+      distribution 'repo'
+    }
+  }
+  scm {
+    url 'scm:git@github.com:swardana/jepub.git'
+    connection 'scm:git@github.com:swardana/jepub.git'
+    developerConnection 'scm:git@github.com:swardana/jepub.git'
+  }
+  developers {
+    developer {
+      id 'swardana'
+      name 'Sukma Wardana'
+      email 'sukma.wardana@mail.com'
+    }
+  }
 }
 
 repositories {
   mavenCentral()
   jcenter()
+}
+
+jar {
+  manifest {
+    attributes(
+      'Built-By': System.properties['user.name'],
+      'Created-By': System.properties['java.version'] 
+        + " (" + System.properties['java.vendor'] 
+        + " " + System.properties['java.vm.version'] + ")",
+      'Specification-Title': project.name,
+      'Specification-Version': project.version,
+      'Implementation-Title': project.name,
+      'Implementation-Version': project.version,
+    )
+  }
+}
+
+// create one jar for the javadoc
+javadoc.failOnError = false
+task javadocJar(type: Jar, dependsOn: javadoc) {
+  classifier = 'javadoc'
+  from javadoc.destinationDir
+}
+
+// create one jar for the source files
+task sourcesJar(type: Jar, dependsOn: classes) {
+  classifier = 'sources'
+  from sourceSets.main.allSource
+}
+
+artifacts {
+  archives jar
+  archives javadocJar
+  archives sourcesJar
+}
+
+signing {
+  sign configurations.archives
+}
+
+publishing {
+  publications {
+    jepub(MavenPublication) {
+      from components.java
+      artifact sourcesJar
+      artifact javadocJar
+
+      pom.withXml {
+        Node pomNode = asNode()
+        pomNode.children().last() + pomConfig
+        pomNode.appendNode('description', description)
+      }
+    }
+  }
 }
