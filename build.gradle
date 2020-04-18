@@ -18,6 +18,7 @@ plugins {
   id 'java-library'
   id 'signing'
   id 'maven-publish'
+  id 'checkstyle'
 }
 
 sourceCompatibility = 11
@@ -115,4 +116,9 @@ publishing {
       }
     }
   }
+}
+
+checkstyle {
+  toolVersion = '8.30'
+  configFile = file("$rootProject.projectDir/config/checkstyle/checkstyle.xml")
 }
